@@ -1,24 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { SystemMetric } from '../types';
-import { Activity, Battery, Shield, Cpu, Wifi } from 'lucide-react';
+import { Activity, Battery, Shield, Cpu, Zap, Database } from 'lucide-react';
 
 const SystemMonitor: React.FC = () => {
   const [metrics, setMetrics] = useState<SystemMetric[]>([
-    { id: 'armor', label: 'ARMOR INTEGRITY', value: 100, max: 100, unit: '%', status: 'normal' },
-    { id: 'power', label: 'ARC OUTPUT', value: 92, max: 100, unit: 'GJ', status: 'normal' },
+    { id: 'armor', label: 'SUIT INTEGRITY', value: 100, max: 100, unit: '%', status: 'normal' },
+    { id: 'power', label: 'ARC REACTOR', value: 92, max: 100, unit: '%', status: 'normal' },
     { id: 'thrusters', label: 'THRUSTERS', value: 85, max: 100, unit: '%', status: 'normal' },
-    { id: 'cpu', label: 'CPU LOAD', value: 12, max: 100, unit: '%', status: 'normal' },
+    { id: 'cpu', label: 'CORTEX LINK', value: 12, max: 100, unit: 'TB', status: 'normal' },
   ]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setMetrics(prev => prev.map(m => {
-        // Random fluctuation
         const change = (Math.random() - 0.5) * 5;
         let newValue = Math.min(m.max, Math.max(0, m.value + change));
-        
-        // Specific simulation logic
-        if (m.id === 'cpu') newValue = Math.random() * 30 + 10;
+        if (m.id === 'cpu') newValue = Math.random() * 20 + 30;
         
         let status: SystemMetric['status'] = 'normal';
         if (newValue < 30 && m.id === 'armor') status = 'critical';
@@ -26,60 +23,68 @@ const SystemMonitor: React.FC = () => {
         
         return { ...m, value: newValue, status };
       }));
-    }, 1000);
+    }, 800);
     return () => clearInterval(interval);
   }, []);
 
   const getIcon = (id: string) => {
     switch (id) {
-      case 'armor': return <Shield size={16} />;
-      case 'power': return <Battery size={16} />;
-      case 'cpu': return <Cpu size={16} />;
-      default: return <Activity size={16} />;
+      case 'armor': return <Shield size={14} />;
+      case 'power': return <Zap size={14} />;
+      case 'cpu': return <Database size={14} />;
+      default: return <Activity size={14} />;
     }
   };
 
   const getBarColor = (status: string) => {
-    if (status === 'critical') return 'bg-red-500 shadow-[0_0_10px_#ef4444]';
-    if (status === 'warning') return 'bg-yellow-500 shadow-[0_0_10px_#eab308]';
-    return 'bg-cyan-500 shadow-[0_0_8px_#06b6d4]';
+    if (status === 'critical') return 'bg-red-500 shadow-[0_0_8px_#ef4444]';
+    if (status === 'warning') return 'bg-yellow-500 shadow-[0_0_8px_#eab308]';
+    return 'bg-cyan-400 shadow-[0_0_8px_#22d3ee]';
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 font-mono-tech">
       {metrics.map((metric) => (
-        <div key={metric.id} className="bg-black/40 border-l-2 border-cyan-500/30 pl-3 py-1">
-          <div className="flex justify-between items-center mb-1 text-xs font-hud tracking-widest text-cyan-400/80">
-             <span className="flex items-center gap-2">
+        <div key={metric.id} className="relative group">
+           {/* Background Grid for bar */}
+           <div className="absolute top-0 right-0 w-full h-full border border-cyan-900/30 skew-x-[-10deg] pointer-events-none"></div>
+           
+           <div className="flex justify-between items-center mb-1 text-[10px] tracking-wider text-cyan-500">
+             <span className="flex items-center gap-2 uppercase font-bold">
                {getIcon(metric.id)}
                {metric.label}
              </span>
-             <span className={metric.status === 'critical' ? 'text-red-500 animate-pulse' : 'text-cyan-300'}>
-               {metric.value.toFixed(1)}{metric.unit}
+             <span className={metric.status === 'critical' ? 'text-red-500 animate-pulse font-bold' : 'text-cyan-200'}>
+               {metric.value.toFixed(0)}{metric.unit}
              </span>
-          </div>
-          <div className="h-1.5 w-full bg-cyan-900/30 rounded-full overflow-hidden">
-            <div 
-              className={`h-full transition-all duration-500 ${getBarColor(metric.status)}`}
-              style={{ width: `${(metric.value / metric.max) * 100}%` }}
-            ></div>
-          </div>
+           </div>
+           
+           {/* Segmented Bar Chart */}
+           <div className="flex gap-0.5 h-2">
+             {[...Array(20)].map((_, i) => {
+               const threshold = (i / 20) * 100;
+               const isActive = metric.value > threshold;
+               return (
+                 <div 
+                   key={i}
+                   className={`flex-1 transform skew-x-[-10deg] transition-all duration-300 ${isActive ? getBarColor(metric.status) : 'bg-cyan-900/20'}`}
+                   style={{ opacity: isActive ? 1 : 0.2 }}
+                 ></div>
+               );
+             })}
+           </div>
         </div>
       ))}
-      
-      <div className="mt-6 border-t border-cyan-500/20 pt-4">
-        <div className="flex items-center justify-between text-cyan-600 text-xs font-mono mb-2">
-          <span>NETWORK</span>
-          <Wifi size={14} />
-        </div>
-        <div className="grid grid-cols-6 gap-1">
-          {[...Array(12)].map((_, i) => (
-            <div 
-              key={i} 
-              className={`h-6 w-full ${Math.random() > 0.5 ? 'bg-cyan-500/40' : 'bg-cyan-900/20'} animate-pulse`}
-              style={{ animationDelay: `${i * 0.1}s` }}
-            ></div>
-          ))}
+
+      {/* Footer Grid */}
+      <div className="mt-6 pt-4 border-t border-cyan-500/20">
+        <div className="grid grid-cols-4 gap-2">
+           {[...Array(8)].map((_, i) => (
+              <div key={i} className="h-8 border border-cyan-500/10 bg-cyan-900/5 relative overflow-hidden">
+                <div className={`absolute inset-0 bg-cyan-400/20 animate-pulse`} style={{ animationDelay: `${i * 0.2}s`, width: `${Math.random() * 100}%` }}></div>
+                <span className="absolute bottom-0 right-1 text-[8px] text-cyan-700">SYS_0{i}</span>
+              </div>
+           ))}
         </div>
       </div>
     </div>
