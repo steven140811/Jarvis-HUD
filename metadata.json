@@ -1,0 +1,9 @@
+{
+  "name": "Copy of J.A.R.V.I.S. HUD",
+  "description": "A fully functional, voice-activated Heads-Up Display inspired by Tony Stark's Iron Man interface, powered by Gemini 2.5 Flash.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
